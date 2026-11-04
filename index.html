@@ -364,8 +364,13 @@ async function loadLineProfile() {
       liffId: "2012376971-EiE4dle6"
     });
 
+    if (!liff.isInClient() && !liff.isLoggedIn()) {
+      nameInput.placeholder = "กรุณาเปิดผ่าน LINE";
+      return;
+    }
+
     if (!liff.isLoggedIn()) {
-      liff.login();
+      nameInput.placeholder = "กรุณาเข้าสู่ระบบ LINE";
       return;
     }
 
@@ -373,14 +378,17 @@ async function loadLineProfile() {
     nameInput.value = profile.displayName || "";
 
     if (!nameInput.value) {
-      alert("ไม่พบชื่อ LINE กรุณาลองเปิดแบบประเมินใหม่อีกครั้ง");
+      nameInput.placeholder = "ไม่พบชื่อ LINE";
     }
 
   } catch (error) {
     console.error("LINE Profile Error:", error);
-    alert("ไม่สามารถดึงชื่อ LINE ได้ กรุณาเปิดแบบประเมินผ่าน LINE");
+    nameInput.placeholder = "โหลดชื่อ LINE ไม่สำเร็จ";
+    alert("เกิดข้อผิดพลาดในการเชื่อมต่อ LINE กรุณาลองใหม่");
   }
 }
+
+loadLineProfile();
 
 loadLineProfile();
 </script>
