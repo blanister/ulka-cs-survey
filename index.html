@@ -186,6 +186,7 @@ textarea {
   font-size: 13px;
 }
 </style>
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>  
 </head>
 
 <body>
@@ -209,12 +210,13 @@ textarea {
   <div class="name-field">
     <label for="customerName">ชื่อลูกค้า <span style="color:#d4ad16">*</span></label>
     <input
-      type="text"
-      id="customerName"
-      placeholder="กรุณากรอกชื่อของคุณ"
-      autocomplete="name"
-      required
-    >
+    type="text"
+    id="customerName"
+    placeholder="กำลังโหลดชื่อจาก LINE..."
+    autocomplete="name"
+    readonly
+    required
+>
   </div>
 
   <div class="question">
@@ -353,6 +355,34 @@ async function submitSurvey() {
     btn.textContent = "ส่งผลการประเมิน →";
   }
 }
+// ดึงชื่อโปรไฟล์จาก LINE
+async function loadLineProfile() {
+  const nameInput = document.getElementById("customerName");
+
+  try {
+    await liff.init({
+      liffId: "2012376971-EiE4dle6"
+    });
+
+    if (!liff.isLoggedIn()) {
+      liff.login();
+      return;
+    }
+
+    const profile = await liff.getProfile();
+    nameInput.value = profile.displayName || "";
+
+    if (!nameInput.value) {
+      alert("ไม่พบชื่อ LINE กรุณาลองเปิดแบบประเมินใหม่อีกครั้ง");
+    }
+
+  } catch (error) {
+    console.error("LINE Profile Error:", error);
+    alert("ไม่สามารถดึงชื่อ LINE ได้ กรุณาเปิดแบบประเมินผ่าน LINE");
+  }
+}
+
+loadLineProfile();
 </script>
 
 </body>
