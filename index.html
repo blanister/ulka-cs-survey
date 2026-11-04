@@ -229,7 +229,14 @@ textarea {
 </div>
 
 <script>
-const scores = { q1: null, q2: null };
+
+<script>
+const API_URL = "https://script.google.com/macros/s/AKfycbzxb6GcVag4J7hmaFOo6HirwRlwZsF5WgGkKVZlLiwC-MRuI-JPmx-doW789krgb643/exec";
+
+const scores = {
+  q1: null,
+  q2: null
+};
 
 document.querySelectorAll(".ratings").forEach(group => {
   group.querySelectorAll(".rating").forEach(button => {
@@ -245,21 +252,51 @@ document.querySelectorAll(".ratings").forEach(group => {
   });
 });
 
-function submitSurvey() {
+async function submitSurvey() {
   if (!scores.q1 || !scores.q2) {
     alert("กรุณาเลือกคะแนนให้ครบทั้ง 2 หัวข้อค่ะ");
     return;
   }
 
+  const btn = document.querySelector(".submit");
   const result = document.getElementById("result");
-  result.style.display = "block";
-  result.textContent =
-    "ตัวอย่างผลประเมิน: " + scores.q1 + "/" + scores.q2 +
-    " — คะแนนเฉลี่ย " + ((scores.q1 + scores.q2) / 2).toFixed(1) +
-    " คะแนน";
 
-  result.scrollIntoView({ behavior: "smooth" });
+  btn.disabled = true;
+  btn.textContent = "กำลังส่งข้อมูล...";
+
+  const payload = {
+    caseId: new URLSearchParams(location.search).get("caseId") || "",
+    customerName: "",
+    technician: "",
+    problemResolution: scores.q1,
+    communication: scores.q2,
+    comment: document.getElementById("comment").value
+  };
+
+  try {
+    await fetch(API_URL, {
+      method: "POST",
+      mode: "no-cors",
+      headers: {
+        "Content-Type": "text/plain;charset=utf-8"
+      },
+      body: JSON.stringify(payload)
+    });
+
+    result.style.display = "block";
+    result.textContent =
+      "ส่งคำขอประเมินแล้วค่ะ ขอบคุณที่ใช้บริการ ULKA ❤️";
+
+    btn.textContent = "ส่งคำขอแล้ว";
+    
+  } catch (error) {
+    alert("ไม่สามารถส่งข้อมูลได้ กรุณาลองใหม่อีกครั้งค่ะ");
+    btn.disabled = false;
+    btn.textContent = "ส่งผลการประเมิน →";
+  }
 }
+</script>
+
 </script>
 </body>
 </html>
