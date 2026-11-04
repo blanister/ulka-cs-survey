@@ -5,6 +5,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ULKA Satisfaction Survey</title>
+
 <style>
 * { box-sizing: border-box; }
 
@@ -12,8 +13,7 @@ body {
   margin: 0;
   padding: 24px 16px;
   background: #f4f6f8;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
-    sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   color: #20252b;
 }
 
@@ -75,6 +75,32 @@ h2 {
   line-height: 1.6;
 }
 
+.name-field {
+  margin-top: 22px;
+}
+
+.name-field label {
+  display: block;
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 9px;
+}
+
+.name-field input {
+  width: 100%;
+  padding: 14px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  font: inherit;
+  font-size: 14px;
+  outline: none;
+}
+
+.name-field input:focus {
+  border-color: #d4ad16;
+  box-shadow: 0 0 0 3px rgba(212,173,22,.12);
+}
+
 .ratings {
   display: flex;
   gap: 8px;
@@ -86,16 +112,20 @@ h2 {
   padding: 12px 0;
   border: 1px solid #ddd;
   border-radius: 10px;
-  background: white;
+  background: #fff;
+  color: #20252b;
   font-size: 17px;
   font-weight: 700;
   cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
 }
 
-.rating.active {
-  background: #20252b;
-  color: #fff;
-  border-color: #20252b;
+.rating.active,
+.rating.active:focus {
+  background: #20252b !important;
+  color: #fff !important;
+  border-color: #20252b !important;
 }
 
 .rating:focus-visible {
@@ -135,6 +165,11 @@ textarea {
   margin-top: 20px;
 }
 
+.submit:disabled {
+  opacity: .6;
+  cursor: not-allowed;
+}
+
 .footer {
   text-align: center;
   color: #999;
@@ -170,16 +205,28 @@ textarea {
     ใช้เวลาเพียงไม่กี่วินาทีค่ะ ❤️
   </div>
 
+  <!-- ชื่อลูกค้า -->
+  <div class="name-field">
+    <label for="customerName">ชื่อลูกค้า <span style="color:#d4ad16">*</span></label>
+    <input
+      type="text"
+      id="customerName"
+      placeholder="กรุณากรอกชื่อของคุณ"
+      autocomplete="name"
+      required
+    >
+  </div>
+
   <div class="question">
     <h3>01 — งานบริการแก้ไขปัญหา</h3>
     <p>คุณพึงพอใจต่อผลการแก้ไขปัญหามากน้อยเพียงใด?</p>
 
     <div class="ratings" data-question="q1">
-      <button class="rating" data-score="1">1</button>
-      <button class="rating" data-score="2">2</button>
-      <button class="rating" data-score="3">3</button>
-      <button class="rating" data-score="4">4</button>
-      <button class="rating" data-score="5">5</button>
+      <button type="button" class="rating" data-score="1">1</button>
+      <button type="button" class="rating" data-score="2">2</button>
+      <button type="button" class="rating" data-score="3">3</button>
+      <button type="button" class="rating" data-score="4">4</button>
+      <button type="button" class="rating" data-score="5">5</button>
     </div>
     <div class="score-label">
       <span>ไม่พอใจมาก</span>
@@ -194,11 +241,11 @@ textarea {
     <p>คุณพึงพอใจต่อการให้ข้อมูลและการสื่อสารของเจ้าหน้าที่มากน้อยเพียงใด?</p>
 
     <div class="ratings" data-question="q2">
-      <button class="rating" data-score="1">1</button>
-      <button class="rating" data-score="2">2</button>
-      <button class="rating" data-score="3">3</button>
-      <button class="rating" data-score="4">4</button>
-      <button class="rating" data-score="5">5</button>
+      <button type="button" class="rating" data-score="1">1</button>
+      <button type="button" class="rating" data-score="2">2</button>
+      <button type="button" class="rating" data-score="3">3</button>
+      <button type="button" class="rating" data-score="4">4</button>
+      <button type="button" class="rating" data-score="5">5</button>
     </div>
     <div class="score-label">
       <span>ไม่พอใจมาก</span>
@@ -215,7 +262,7 @@ textarea {
       placeholder="แสดงความคิดเห็นเพิ่มเติม..."></textarea>
   </div>
 
-  <button class="submit" onclick="submitSurvey()">
+  <button type="button" class="submit" onclick="submitSurvey()">
     ส่งผลการประเมิน →
   </button>
 
@@ -229,8 +276,6 @@ textarea {
 </div>
 
 <script>
-
-<script>
 const API_URL = "https://script.google.com/macros/s/AKfycbzxb6GcVag4J7hmaFOo6HirwRlwZsF5WgGkKVZlLiwC-MRuI-JPmx-doW789krgb643/exec";
 
 const scores = {
@@ -238,6 +283,7 @@ const scores = {
   q2: null
 };
 
+// เลือกคะแนน
 document.querySelectorAll(".ratings").forEach(group => {
   group.querySelectorAll(".rating").forEach(button => {
     button.addEventListener("click", () => {
@@ -245,14 +291,26 @@ document.querySelectorAll(".ratings").forEach(group => {
       scores[question] = Number(button.dataset.score);
 
       group.querySelectorAll(".rating").forEach(b => {
-        b.classList.toggle("active", b === button);
-        b.setAttribute("aria-pressed", b === button);
+        const selected = b === button;
+        b.classList.toggle("active", selected);
+        b.setAttribute("aria-pressed", String(selected));
       });
     });
   });
 });
 
+// ส่งผลประเมิน
 async function submitSurvey() {
+  const customerName = document
+    .getElementById("customerName")
+    .value.trim();
+
+  if (!customerName) {
+    alert("กรุณากรอกชื่อลูกค้าก่อนค่ะ");
+    document.getElementById("customerName").focus();
+    return;
+  }
+
   if (!scores.q1 || !scores.q2) {
     alert("กรุณาเลือกคะแนนให้ครบทั้ง 2 หัวข้อค่ะ");
     return;
@@ -266,11 +324,11 @@ async function submitSurvey() {
 
   const payload = {
     caseId: new URLSearchParams(location.search).get("caseId") || "",
-    customerName: "",
+    customerName: customerName,
     technician: "",
     problemResolution: scores.q1,
     communication: scores.q2,
-    comment: document.getElementById("comment").value
+    comment: document.getElementById("comment").value.trim()
   };
 
   try {
@@ -288,7 +346,7 @@ async function submitSurvey() {
       "ส่งคำขอประเมินแล้วค่ะ ขอบคุณที่ใช้บริการ ULKA ❤️";
 
     btn.textContent = "ส่งคำขอแล้ว";
-    
+
   } catch (error) {
     alert("ไม่สามารถส่งข้อมูลได้ กรุณาลองใหม่อีกครั้งค่ะ");
     btn.disabled = false;
@@ -297,6 +355,5 @@ async function submitSurvey() {
 }
 </script>
 
-</script>
 </body>
 </html>
