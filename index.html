@@ -235,19 +235,27 @@
       result.style.display = "none";
 
       const surveyId = generateSurveyId();
-      const payload = {
-        surveyId,
-        caseId: params.get("caseId") || "",
-        customerName,
-        technician: "",
-        problemResolution: scores.q1,
-        communication: scores.q2,
-        comment: document.getElementById("comment").value.trim(),
-        departmentId,
-        adminId: params.get("admin") || "",
-        platform: "LINE",
-        platformUserId: lineUserId
-      };
+
+const payload = {
+  surveyId,
+  caseId: params.get("caseId") || "",
+  customerName,
+  technician: "",
+
+  // คะแนนสำหรับ Apps Script
+  score1: scores.q1,
+  score2: scores.q2,
+
+  // เก็บชื่อฟิลด์เดิมไว้ด้วย
+  problemResolution: scores.q1,
+  communication: scores.q2,
+
+  comment: document.getElementById("comment").value.trim(),
+  departmentId,
+  adminId: params.get("admin") || "",
+  platform: "LINE",
+  platformUserId: lineUserId
+};
 
       try {
         await fetch(API_URL, {
