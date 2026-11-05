@@ -135,6 +135,10 @@
   <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbwGL3M2A2WobTSbTvIAI4caJsVIcDuFfDnWwp0XqrVbT5MnRvBqKAPB2nGkq9d5ftkN/exec";
     const LIFF_ID = "2012376971-EiE4dIe6";
+
+    // Token ประจำตัวพนักงานจากลิงก์ LIFF
+    const STAFF_TOKEN = new URLSearchParams(window.location.search).get("token") || "";
+
     const scores = { q1: null, q2: null };
     let lineUserId = "";
     let lineReady = false;
@@ -221,10 +225,8 @@
         return;
       }
 
-      const params = new URLSearchParams(location.search);
-      const departmentId = (params.get("department") || "").trim().toUpperCase();
-      if (!["CS", "OS"].includes(departmentId)) {
-        alert("ลิงก์นี้ยังไม่ได้ระบุแผนก CS หรือ OS กรุณาติดต่อเจ้าหน้าที่ค่ะ");
+      if (!STAFF_TOKEN) {
+        alert("ไม่พบรหัสลิงก์พนักงาน กรุณาขอลิงก์ใหม่จากเจ้าหน้าที่ค่ะ");
         return;
       }
 
@@ -238,21 +240,11 @@
 
 const payload = {
   surveyId,
-  caseId: params.get("caseId") || "",
   customerName,
-  technician: "",
-
-  // คะแนนสำหรับ Apps Script
-  score1: scores.q1,
-  score2: scores.q2,
-
-  // เก็บชื่อฟิลด์เดิมไว้ด้วย
+  staffToken: STAFF_TOKEN,
   problemResolution: scores.q1,
   communication: scores.q2,
-
   comment: document.getElementById("comment").value.trim(),
-  departmentId,
-  adminId: params.get("admin") || "",
   platform: "LINE",
   platformUserId: lineUserId
 };
@@ -287,6 +279,16 @@ const payload = {
 
     async function loadLineProfile() {
       const nameInput = document.getElementById("customerName");
+
+      if (!STAFF_TOKEN) {
+        nameInput.placeholder = "ไม่พบลิงก์พนักงาน";
+        document.getElementById("result").textContent =
+          "ลิงก์นี้ไม่ถูกต้อง กรุณาติดต่อเจ้าหน้าที่เพื่อขอลิงก์ใหม่ค่ะ";
+        document.getElementById("result").className = "error";
+        document.getElementById("result").style.display = "block";
+        return;
+      }
+
       try {
         await liff.init({ liffId: LIFF_ID });
         if (!liff.isLoggedIn()) {
