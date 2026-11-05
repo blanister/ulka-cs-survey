@@ -25,6 +25,18 @@ document.querySelectorAll(".ratings").forEach(group => {
   });
 });
 
+// สร้าง Survey ID อัตโนมัติ
+function generateSurveyId() {
+  const bytes = crypto.getRandomValues(new Uint8Array(6));
+
+  const randomId = Array.from(bytes)
+    .map(b => b.toString(16).padStart(2, "0"))
+    .join("")
+    .toUpperCase();
+
+  return "SV-" + randomId;
+}
+
 // ส่งผลประเมิน
 async function submitSurvey() {
   const customerName = document
@@ -54,7 +66,11 @@ async function submitSurvey() {
 
   const params = new URLSearchParams(location.search);
 
+  // สร้าง Survey ID ใหม่สำหรับรายการนี้
+  const surveyId = generateSurveyId();
+
   const payload = {
+    surveyId: surveyId,
     caseId: params.get("caseId") || "",
     customerName: customerName,
     technician: "",
