@@ -1,289 +1,13 @@
 
-<!DOCTYPE html>
-<html lang="th">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ULKA Satisfaction Survey</title>
-
-<style>
-* { box-sizing: border-box; }
-
-body {
-  margin: 0;
-  padding: 24px 16px;
-  background: #f4f6f8;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  color: #20252b;
-}
-
-.container {
-  max-width: 480px;
-  margin: 30px auto;
-  background: white;
-  border-radius: 20px;
-  padding: 28px 22px;
-  box-shadow: 0 8px 30px rgba(0,0,0,.06);
-}
-
-.logo {
-  text-align: center;
-  font-size: 30px;
-  font-weight: 800;
-  letter-spacing: 2px;
-  color: #20252b;
-}
-
-.logo span { color: #d4ad16; }
-
-.subtitle {
-  text-align: center;
-  color: #777;
-  font-size: 13px;
-  margin-top: 5px;
-}
-
-hr {
-  border: 0;
-  border-top: 1px solid #eee;
-  margin: 24px 0;
-}
-
-h2 {
-  font-size: 19px;
-  margin-bottom: 8px;
-}
-
-.intro {
-  font-size: 14px;
-  line-height: 1.8;
-  color: #626a73;
-}
-
-.question {
-  margin: 25px 0;
-}
-
-.question h3 {
-  font-size: 15px;
-  margin-bottom: 7px;
-}
-
-.question p {
-  font-size: 13px;
-  color: #737b84;
-  line-height: 1.6;
-}
-
-.name-field {
-  margin-top: 22px;
-}
-
-.name-field label {
-  display: block;
-  font-size: 14px;
-  font-weight: 700;
-  margin-bottom: 9px;
-}
-
-.name-field input {
-  width: 100%;
-  padding: 14px;
-  border: 1px solid #ddd;
-  border-radius: 10px;
-  font: inherit;
-  font-size: 14px;
-  outline: none;
-}
-
-.name-field input:focus {
-  border-color: #d4ad16;
-  box-shadow: 0 0 0 3px rgba(212,173,22,.12);
-}
-
-.ratings {
-  display: flex;
-  gap: 8px;
-  margin-top: 15px;
-}
-
-.rating {
-  flex: 1;
-  padding: 12px 0;
-  border: 1px solid #ddd;
-  border-radius: 10px;
-  background: #fff;
-  color: #20252b;
-  font-size: 17px;
-  font-weight: 700;
-  cursor: pointer;
-  appearance: none;
-  -webkit-appearance: none;
-}
-
-.rating.active,
-.rating.active:focus {
-  background: #20252b !important;
-  color: #fff !important;
-  border-color: #20252b !important;
-}
-
-.rating:focus-visible {
-  outline: 3px solid #e6c94c;
-  outline-offset: 2px;
-}
-
-.score-label {
-  display: flex;
-  justify-content: space-between;
-  font-size: 10px;
-  color: #999;
-  margin-top: 9px;
-}
-
-textarea {
-  width: 100%;
-  min-height: 90px;
-  padding: 12px;
-  border: 1px solid #ddd;
-  border-radius: 10px;
-  resize: vertical;
-  font: inherit;
-  font-size: 14px;
-}
-
-.submit {
-  width: 100%;
-  border: 0;
-  border-radius: 12px;
-  padding: 16px;
-  background: #d4ad16;
-  color: #20252b;
-  font-size: 16px;
-  font-weight: 700;
-  cursor: pointer;
-  margin-top: 20px;
-}
-
-.submit:disabled {
-  opacity: .6;
-  cursor: not-allowed;
-}
-
-.footer {
-  text-align: center;
-  color: #999;
-  font-size: 11px;
-  margin-top: 24px;
-}
-
-#result {
-  display: none;
-  padding: 14px;
-  background: #fff7d6;
-  border-radius: 10px;
-  margin-top: 15px;
-  font-size: 13px;
-}
-</style>
-<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>  
-</head>
-
-<body>
-<div class="container">
-
-  <div class="logo">ULKA<span>.</span></div>
-  <div class="subtitle">CUSTOMER SATISFACTION SURVEY</div>
-
-  <hr>
-
-  <h2>ประเมินความพึงพอใจ</h2>
-
-  <div class="intro">
-    ขอบคุณที่ไว้วางใจใช้บริการ ULKA ค่ะ
-    เราอยากทราบความคิดเห็นของคุณ
-    เพื่อพัฒนาคุณภาพการบริการให้ดียิ่งขึ้น
-    ใช้เวลาเพียงไม่กี่วินาทีค่ะ ❤️
-  </div>
-
-  <!-- ชื่อลูกค้า -->
-  <div class="name-field">
-    <label for="customerName">ชื่อลูกค้า <span style="color:#d4ad16">*</span></label>
-    <input
-    type="text"
-    id="customerName"
-    placeholder="กำลังโหลดชื่อจาก LINE..."
-    autocomplete="name"
-    readonly
-    required
->
-  </div>
-
-  <div class="question">
-    <h3>01 — งานบริการแก้ไขปัญหา</h3>
-    <p>คุณพึงพอใจต่อผลการแก้ไขปัญหามากน้อยเพียงใด?</p>
-
-    <div class="ratings" data-question="q1">
-      <button type="button" class="rating" data-score="1">1</button>
-      <button type="button" class="rating" data-score="2">2</button>
-      <button type="button" class="rating" data-score="3">3</button>
-      <button type="button" class="rating" data-score="4">4</button>
-      <button type="button" class="rating" data-score="5">5</button>
-    </div>
-    <div class="score-label">
-      <span>ไม่พอใจมาก</span>
-      <span>ดีเยี่ยม</span>
-    </div>
-  </div>
-
-  <hr>
-
-  <div class="question">
-    <h3>02 — การสื่อสาร</h3>
-    <p>คุณพึงพอใจต่อการให้ข้อมูลและการสื่อสารของเจ้าหน้าที่มากน้อยเพียงใด?</p>
-
-    <div class="ratings" data-question="q2">
-      <button type="button" class="rating" data-score="1">1</button>
-      <button type="button" class="rating" data-score="2">2</button>
-      <button type="button" class="rating" data-score="3">3</button>
-      <button type="button" class="rating" data-score="4">4</button>
-      <button type="button" class="rating" data-score="5">5</button>
-    </div>
-    <div class="score-label">
-      <span>ไม่พอใจมาก</span>
-      <span>ดีเยี่ยม</span>
-    </div>
-  </div>
-
-  <hr>
-
-  <div class="question">
-    <h3>03 — ข้อเสนอแนะเพิ่มเติม</h3>
-    <p>มีสิ่งใดที่อยากให้เราปรับปรุงหรือไม่? (ไม่บังคับ)</p>
-    <textarea id="comment"
-      placeholder="แสดงความคิดเห็นเพิ่มเติม..."></textarea>
-  </div>
-
-  <button type="button" class="submit" onclick="submitSurvey()">
-    ส่งผลการประเมิน →
-  </button>
-
-  <div id="result"></div>
-
-  <div class="footer">
-    ULKA CUSTOMER CARE<br>
-    Thank you for helping us improve.
-  </div>
-
-</div>
-
-<script>
-const API_URL = "https://script.google.com/macros/s/AKfycbynzHQb7GWxu2Jpi-y1wEpVKK76vVtCdhvWQMrawx2TzlPqm-JLaCa-gs_yGt2V-DuH/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbwGL3M2A2WobTSbTvIAI4caJsVIcDuFfDnWwp0XqrVbT5MnRvBqKAPB2nGkq9d5ftkN/exec";
 
 const scores = {
   q1: null,
   q2: null
 };
+
+// เก็บ LINE User ID
+let lineUserId = "";
 
 // เลือกคะแนน
 document.querySelectorAll(".ratings").forEach(group => {
@@ -308,8 +32,12 @@ async function submitSurvey() {
     .value.trim();
 
   if (!customerName) {
-    alert("กรุณากรอกชื่อลูกค้าก่อนค่ะ");
-    document.getElementById("customerName").focus();
+    alert("กรุณาเปิดแบบประเมินผ่าน LINE ก่อนค่ะ");
+    return;
+  }
+
+  if (!lineUserId) {
+    alert("ไม่พบ LINE User ID กรุณาเปิดแบบประเมินผ่าน LINE อีกครั้งค่ะ");
     return;
   }
 
@@ -324,13 +52,20 @@ async function submitSurvey() {
   btn.disabled = true;
   btn.textContent = "กำลังส่งข้อมูล...";
 
+  const params = new URLSearchParams(location.search);
+
   const payload = {
-    caseId: new URLSearchParams(location.search).get("caseId") || "",
+    caseId: params.get("caseId") || "",
     customerName: customerName,
     technician: "",
     problemResolution: scores.q1,
     communication: scores.q2,
-    comment: document.getElementById("comment").value.trim()
+    comment: document.getElementById("comment").value.trim(),
+
+    departmentId: params.get("department") || "",
+    adminId: params.get("admin") || "",
+    platform: "LINE",
+    platformUserId: lineUserId
   };
 
   try {
@@ -350,12 +85,16 @@ async function submitSurvey() {
     btn.textContent = "ส่งคำขอแล้ว";
 
   } catch (error) {
+    console.error("Survey Submit Error:", error);
+
     alert("ไม่สามารถส่งข้อมูลได้ กรุณาลองใหม่อีกครั้งค่ะ");
+
     btn.disabled = false;
     btn.textContent = "ส่งผลการประเมิน →";
   }
 }
-// ดึงชื่อโปรไฟล์จาก LINE
+
+// ดึงข้อมูลโปรไฟล์จาก LINE
 async function loadLineProfile() {
   const nameInput = document.getElementById("customerName");
 
@@ -375,7 +114,9 @@ async function loadLineProfile() {
     }
 
     const profile = await liff.getProfile();
+
     nameInput.value = profile.displayName || "";
+    lineUserId = profile.userId || "";
 
     if (!nameInput.value) {
       nameInput.placeholder = "ไม่พบชื่อ LINE";
@@ -383,15 +124,12 @@ async function loadLineProfile() {
 
   } catch (error) {
     console.error("LINE Profile Error:", error);
+
     nameInput.placeholder = "โหลดชื่อ LINE ไม่สำเร็จ";
+
     alert("LINE Error: " + String(error));
   }
 }
 
+// เรียกใช้งานเพียงครั้งเดียว
 loadLineProfile();
-
-loadLineProfile();
-</script>
-
-</body>
-</html>
