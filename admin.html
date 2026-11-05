@@ -1,1 +1,64 @@
-
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#17212b">
+<title>ULKA | Admin Manager</title>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+:root{--ink:#17212b;--muted:#718096;--line:#e5eaf0;--bg:#f4f6f8;--green:#16845b;--red:#b83227}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Tahoma,sans-serif}
+header{background:var(--ink);color:#fff;padding:23px 20px 52px}.head,main{max-width:1050px;margin:auto}.head{display:flex;justify-content:space-between;align-items:center}.logo{font-size:23px;font-weight:800;letter-spacing:5px}.logo small{display:block;font-size:10px;letter-spacing:2px;font-weight:500;margin-top:4px}
+main{padding:0 18px;margin-top:-29px;margin-bottom:45px}.panel{background:#fff;border-radius:20px;padding:26px;box-shadow:0 16px 45px #17212b14}
+.login{max-width:480px;margin:auto;text-align:center;padding:38px 24px}.login p,.sub{color:var(--muted);line-height:1.65}.login p{font-size:14px}h1{font-size:23px;margin:0 0 7px}.sub{font-size:14px;margin:0}
+.hidden{display:none!important}button{font:inherit;border:0;border-radius:10px;padding:10px 14px;font-weight:650;cursor:pointer}button:disabled{opacity:.5;cursor:not-allowed}
+.primary{background:var(--ink);color:white}.secondary{background:#edf0f3;color:var(--ink)}.danger{background:#fff0ee;color:var(--red)}.small{font-size:13px;padding:8px 11px}
+#googleButton{display:flex;justify-content:center;margin:22px auto 12px;min-height:42px}.hint{font-size:12px;color:var(--muted)}
+.toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:20px}.identity{font-size:13px;color:var(--muted)}
+.notice{padding:12px 14px;border-radius:11px;font-size:13px;line-height:1.55;margin:14px 0}.info{background:#edf4ff;color:#24549a}.error{background:#fff0ee;color:#b83227}.success{background:#eaf7f1;color:#16845b}
+.dept{font-size:12px;letter-spacing:1.4px;font-weight:800;color:var(--muted);margin:22px 0 10px}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}
+.staff{border:1px solid var(--line);border-radius:15px;padding:16px;min-width:0}.staffhead{display:flex;justify-content:space-between;gap:10px}.name{font-weight:750;font-size:17px}.sid{font-size:12px;color:var(--muted);margin-top:4px}
+.status{font-size:11px;font-weight:750;border-radius:99px;padding:6px 9px;background:#f0f2f4;color:#66717d;height:max-content}.status.active{background:#eaf7f1;color:#16845b}
+.link{overflow-wrap:anywhere;background:#f7f9fb;border:1px solid var(--line);border-radius:10px;padding:10px;font-size:12px;color:#596675;margin:13px 0;min-height:40px}
+.actions{display:flex;gap:8px;flex-wrap:wrap}.footer{text-align:center;color:#a0aab5;font-size:11px;padding:18px}
+@media(max-width:650px){.panel{padding:20px 16px}.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header><div class="head"><div class="logo">ULKA<small>ADMIN MANAGER</small></div><button id="logout" class="secondary small hidden">ออกจากระบบ</button></div></header>
+<main>
+<section id="loginPanel" class="panel login">
+<h1>เข้าสู่ระบบผู้ดูแล</h1><p>ULKA Customer Experience<br>จัดการลิงก์แบบประเมินความพึงพอใจของพนักงาน</p>
+<div id="googleButton"></div><div id="loginMessage" class="notice hidden"></div>
+<div class="hint">อนุญาตเฉพาะบัญชี Google ที่ได้รับสิทธิ์ผู้ดูแลระบบ</div>
+</section>
+<section id="dashboard" class="panel hidden">
+<div class="toolbar"><div><h1>จัดการลิงก์พนักงาน</h1><p class="sub">สร้าง คัดลอก และปิดใช้งานลิงก์แบบประเมินรายบุคคล</p></div><div id="identity" class="identity"></div></div>
+<div id="message" class="notice hidden"></div><div id="staffArea">กำลังโหลดรายชื่อ...</div>
+<div class="notice info">การออกลิงก์ใหม่จะแทนที่ Token เดิมทันที กรุณาคัดลอกลิงก์เก็บไว้ เพราะระบบจะแสดง Token จริงเพียงครั้งเดียว</div>
+</section>
+</main><div class="footer">ULKA · Customer Experience</div>
+<script>
+(() => {
+"use strict";
+const CLIENT_ID="61495287161-fscpka0ethv1r37dtaatmis09qu7au1l.apps.googleusercontent.com";
+const API="https://script.google.com/macros/s/AKfycbwGL3M2A2WobTSbTvIAI4caJsVIcDuFfDnWwp0XqrVbT5MnRvBqKAPB2nGkq9d5ftkN/exec";
+let session="",email="",busy=false;
+const $=id=>document.getElementById(id), hide=(id)=>$(id).classList.add("hidden"), reveal=(id)=>$(id).classList.remove("hidden");
+function notice(id,msg,type){$(id).textContent=msg;$(id).className="notice "+type;reveal(id)}
+function requestId(){const a=new Uint8Array(32);crypto.getRandomValues(a);return [...a].map(x=>x.toString(16).padStart(2,"0")).join("")}
+function jsonp(url,req,ms=10000){return new Promise((resolve,reject)=>{const cb="ulka_"+requestId().slice(0,18),s=document.createElement("script");let done=false;const timer=setTimeout(()=>finish(Error("หมดเวลารอเซิร์ฟเวอร์")),ms);function finish(e,v){if(done)return;done=true;clearTimeout(timer);delete window[cb];s.remove();e?reject(e):resolve(v)}window[cb]=v=>finish(null,v);s.onerror=()=>finish(Error("เชื่อมต่อ Apps Script ไม่สำเร็จ"));s.src=url+"?action=admin_result&requestId="+encodeURIComponent(req)+"&callback="+cb+"&_="+Date.now();document.head.appendChild(s)})}
+async function api(action,extra={}){const req=requestId();await fetch(API,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain;charset=UTF-8"},body:JSON.stringify({action,requestId:req,...extra})});const end=Date.now()+110000;while(Date.now()<end){await new Promise(r=>setTimeout(r,1200));const r=await jsonp(API,req);if(r?.pending)continue;return r}throw Error("เซิร์ฟเวอร์ใช้เวลาตอบกลับนานเกินไป")}
+function busyState(v){busy=v;document.querySelectorAll("button").forEach(b=>{if(b.id!=="logout")b.disabled=v})}
+async function login(response){if(busy)return;busyState(true);hide("loginMessage");try{const r=await api("admin_login",{idToken:response.credential});if(!r?.success||!r.sessionToken)throw Error(r?.message||"เข้าสู่ระบบไม่สำเร็จ");session=r.sessionToken;email=r.admin?.email||r.email||"ผู้ดูแลระบบ";$("identity").textContent="เข้าสู่ระบบ: "+email;hide("loginPanel");reveal("dashboard");reveal("logout");await loadStaff()}catch(e){notice("loginMessage",e.message||"เกิดข้อผิดพลาด","error")}finally{busyState(false)}}
+async function loadStaff(){busyState(true);$("staffArea").textContent="กำลังโหลดรายชื่อพนักงาน...";try{const r=await api("admin_list_staff",{sessionToken:session});if(!r?.success)throw Error(r?.message||"โหลดรายชื่อไม่สำเร็จ");render(r.staff||[])}catch(e){notice("message",e.message,"error");$("staffArea").textContent=""}finally{busyState(false)}}
+function render(staff){hide("message");$("staffArea").innerHTML="";for(const g of [{id:"CS",title:"CUSTOMER SERVICE"},{id:"OS",title:"ON-SITE SERVICE"}]){const h=document.createElement("div");h.className="dept";h.textContent=g.title;$("staffArea").append(h);const grid=document.createElement("div");grid.className="grid";const people=staff.filter(p=>(p.departmentId||"").toUpperCase()===g.id);if(!people.length)grid.textContent="ไม่มีรายชื่อพนักงาน";people.forEach(p=>grid.append(makeCard(p)));$("staffArea").append(grid)}}
+function makeCard(p){const c=document.createElement("article");c.className="staff";const head=document.createElement("div");head.className="staffhead";const n=document.createElement("div");const nm=document.createElement("div");nm.className="name";nm.textContent=p.adminName||"ไม่ระบุชื่อ";const id=document.createElement("div");id.className="sid";id.textContent=p.adminId+" · "+p.departmentId;n.append(nm,id);const st=document.createElement("span");st.className="status"+(p.status==="ACTIVE"?" active":"");st.textContent=p.status==="ACTIVE"?"ACTIVE":"ยังไม่มีลิงก์";head.append(n,st);const link=document.createElement("div");link.className="link";link.textContent=p.status==="ACTIVE"?"สร้างแล้ว (ระบบไม่เก็บ Token จริงไว้แสดงซ้ำ)":"ยังไม่มีลิงก์ที่เปิดใช้งาน";const actions=document.createElement("div");actions.className="actions";const create=document.createElement("button");create.className="primary small";create.textContent=p.status==="ACTIVE"?"ออกลิงก์ใหม่":"สร้างลิงก์";create.onclick=()=>createLink(p,link,st,create);const off=document.createElement("button");off.className="danger small";off.textContent="ปิดใช้งาน";off.disabled=p.status!=="ACTIVE";off.onclick=()=>deactivate(p);actions.append(create,off);c.append(head,link,actions);return c}
+async function createLink(p,box,status,btn){if(busy||!confirm("สร้างลิงก์ใหม่สำหรับ "+p.adminName+" ?\nToken เดิมจะใช้งานไม่ได้ทันที"))return;busyState(true);try{const r=await api("admin_create_staff_link",{sessionToken:session,adminId:p.adminId});if(!r?.success||!r.surveyUrl)throw Error(r?.message||"สร้างลิงก์ไม่สำเร็จ");box.textContent=r.surveyUrl;const copy=document.createElement("button");copy.className="secondary small";copy.textContent="คัดลอกลิงก์";copy.onclick=async()=>{try{await navigator.clipboard.writeText(r.surveyUrl);notice("message","คัดลอกลิงก์ของ "+p.adminName+" แล้ว","success")}catch{notice("message","คัดลอกไม่ได้ กรุณาเลือก URL แล้วคัดลอกด้วยตนเอง","error")}};box.after(copy);status.textContent="ACTIVE";status.className="status active";btn.textContent="ออกลิงก์ใหม่";const off=btn.parentElement.querySelector(".danger");off.disabled=false;notice("message","สร้างลิงก์ของ "+p.adminName+" แล้ว กรุณาคัดลอกเก็บไว้ทันที","success")}catch(e){notice("message",e.message||"เกิดข้อผิดพลาด","error")}finally{busyState(false)}}
+async function deactivate(p){if(busy||!confirm("ยืนยันปิดใช้งานลิงก์ของ "+p.adminName+" ?"))return;busyState(true);try{const r=await api("admin_deactivate_staff_link",{sessionToken:session,adminId:p.adminId});if(!r?.success)throw Error(r?.message||"ปิดใช้งานไม่สำเร็จ");notice("message","ปิดใช้งานลิงก์ของ "+p.adminName+" แล้ว","success");await loadStaff()}catch(e){notice("message",e.message||"เกิดข้อผิดพลาด","error")}finally{busyState(false)}}
+async function logout(){if(busy)return;busyState(true);try{if(session)await api("admin_logout",{sessionToken:session})}catch(e){console.warn(e)}finally{session="";email="";hide("dashboard");hide("logout");reveal("loginPanel");$("staffArea").innerHTML="";busyState(false)}}
+$("logout").addEventListener("click",logout);
+function init(){if(!window.google?.accounts?.id){setTimeout(init,250);return}google.accounts.id.initialize({client_id:CLIENT_ID,callback:login,auto_select:false,cancel_on_tap_outside:true});google.accounts.id.renderButton($("googleButton"),{theme:"outline",size:"large",shape:"pill",text:"signin_with",width:260})}init();
+})();
+</script></body></html>
