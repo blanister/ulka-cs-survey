@@ -136,8 +136,9 @@
     const API_URL = "https://script.google.com/macros/s/AKfycbwGL3M2A2WobTSbTvIAI4caJsVIcDuFfDnWwp0XqrVbT5MnRvBqKAPB2nGkq9d5ftkN/exec";
     const LIFF_ID = "2012376971-EiE4dIe6";
 
-    // Token ประจำตัวพนักงานจากลิงก์ LIFF
-    const STAFF_TOKEN = new URLSearchParams(window.location.search).get("token") || "";
+    // จะอ่าน Staff Token หลัง liff.init() สำเร็จ
+    // เพราะ LINE จะคืน query parameters จาก liff.state หลัง redirect
+    let STAFF_TOKEN = "";
 
     const scores = { q1: null, q2: null };
     let lineUserId = "";
@@ -225,11 +226,6 @@
         return;
       }
 
-      if (!STAFF_TOKEN) {
-        alert("ไม่พบรหัสลิงก์พนักงาน กรุณาขอลิงก์ใหม่จากเจ้าหน้าที่ค่ะ");
-        return;
-      }
-
       submitting = true;
       btn.disabled = true;
       btn.textContent = "กำลังส่งและตรวจสอบข้อมูล...";
@@ -279,34 +275,49 @@ const payload = {
 
     async function loadLineProfile() {
       const nameInput = document.getElementById("customerName");
-
-      if (!STAFF_TOKEN) {
-        nameInput.placeholder = "ไม่พบลิงก์พนักงาน";
-        document.getElementById("result").textContent =
-          "ลิงก์นี้ไม่ถูกต้อง กรุณาติดต่อเจ้าหน้าที่เพื่อขอลิงก์ใหม่ค่ะ";
-        document.getElementById("result").className = "error";
-        document.getElementById("result").style.display = "block";
-        return;
-      }
+      const result = document.getElementById("result");
 
       try {
+        // ต้อง initialize LIFF ให้เสร็จก่อนอ่าน query parameters
         await liff.init({ liffId: LIFF_ID });
-        if (!liff.isLoggedIn()) {
-          nameInput.placeholder = "กรุณาเปิดผ่าน LINE และเข้าสู่ระบบ";
+
+        // LINE จะ restore token จาก liff.state กลับมาใน URL หลัง init
+        const urlParams = new URLSearchParams(window.location.search);
+        STAFF_TOKEN = urlParams.get("token") || "";
+
+        if (!STAFF_TOKEN) {
+          nameInput.placeholder = "ไม่พบลิงก์พนักงาน";
+          result.textContent =
+            "ลิงก์นี้ไม่ถูกต้อง กรุณาติดต่อเจ้าหน้าที่เพื่อขอลิงก์ใหม่ค่ะ";
+          result.className = "error";
+          result.style.display = "block";
           return;
         }
+
+        if (!liff.isLoggedIn()) {
+          nameInput.placeholder = "กรุณาเปิดผ่าน LINE และเข้าสู่ระบบ";
+          result.textContent =
+            "กรุณาเปิดแบบประเมินผ่านแอป LINE เพื่อยืนยันตัวตนก่อนค่ะ";
+          result.className = "error";
+          result.style.display = "block";
+          return;
+        }
+
         const profile = await liff.getProfile();
         nameInput.value = profile.displayName || "";
         lineUserId = profile.userId || "";
         lineReady = Boolean(nameInput.value && lineUserId);
-        if (!lineReady) nameInput.placeholder = "ไม่พบข้อมูลโปรไฟล์ LINE";
+
+        if (!lineReady) {
+          nameInput.placeholder = "ไม่พบข้อมูลโปรไฟล์ LINE";
+        }
       } catch (error) {
         console.error("LINE Profile Error:", error);
         nameInput.placeholder = "โหลดข้อมูล LINE ไม่สำเร็จ";
-        document.getElementById("result").textContent =
+        result.textContent =
           "ไม่สามารถเชื่อมต่อ LINE ได้ กรุณาปิดแล้วเปิดแบบประเมินใหม่ค่ะ";
-        document.getElementById("result").className = "error";
-        document.getElementById("result").style.display = "block";
+        result.className = "error";
+        result.style.display = "block";
       }
     }
 
