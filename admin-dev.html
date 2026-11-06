@@ -227,6 +227,8 @@ const CLIENT_ID =
 // ห้ามใช้ Production URL
 const API = "https://script.google.com/macros/s/AKfycbz8xsalUVruSzths12pU-Wr_HOqjOKOkZCLyYx0Fbi5G66TrxcUarrxOdUSS0x-uK8q/exec";
 
+const SESSION_STORAGE_KEY = "ulka_admin_dev_session_v1";
+
 let session = "";
 let email = "";
 let busy = false;
@@ -330,6 +332,29 @@ function busyState(value) {
   });
 }
 
+function saveSession(token) {
+  session = String(token || "");
+  if (session) {
+    sessionStorage.setItem(SESSION_STORAGE_KEY, session);
+  } else {
+    sessionStorage.removeItem(SESSION_STORAGE_KEY);
+  }
+}
+
+function clearSession() {
+  session = "";
+  email = "";
+  sessionStorage.removeItem(SESSION_STORAGE_KEY);
+}
+
+function showDashboard(adminEmail) {
+  email = adminEmail || "ผู้ดูแลระบบ";
+  $("identity").textContent = "เข้าสู่ระบบ: " + email;
+  hide("loginPanel");
+  reveal("dashboard");
+  reveal("logout");
+}
+
 
 // ==========================================
 // LOGIN
@@ -350,16 +375,20 @@ async function login(response) {
       throw Error(result?.message || "เข้าสู่ระบบไม่สำเร็จ");
     }
 
-    session = result.sessionToken;
-    email = result.admin?.email || result.email || "ผู้ดูแลระบบ";
+    saveSession(result.sessionToken);
 
-    $("identity").textContent = "เข้าสู่ระบบ: " + email;
+    const adminValue = result.admin;
+    const adminEmail = typeof adminValue === "string"
+      ? adminValue
+      : adminValue?.email || result.email || "ผู้ดูแลระบบ";
 
-    hide("loginPanel");
-    reveal("dashboard");
-    reveal("logout");
+    showDashboard(adminEmail);
 
-    await refreshAll();
+    try {
+      await refreshAll();
+    } catch (loadError) {
+      notice("message", loadError.message || "เข้าสู่ระบบแล้ว แต่โหลดข้อมูลไม่สำเร็จ", "error");
+    }
 
   } catch (error) {
     notice("loginMessage",error.message || "เกิดข้อผิดพลาด","error");
@@ -391,34 +420,37 @@ window.showTab = function(tab) {
 // ==========================================
 
 async function refreshAll() {
-  busyState(true);
-
-  try {
-    const [staffResult,deptResult] = await Promise.all([
-      api("admin_list_staff",{sessionToken:session}),
-      api("admin_list_departments",{sessionToken:session})
-    ]);
-
-    if (!staffResult?.success) {
-      throw Error(staffResult?.message || "โหลดพนักงานไม่สำเร็จ");
-    }
-
-    if (!deptResult?.success) {
-      throw Error(deptResult?.message || "โหลดแผนกไม่สำเร็จ");
-    }
-
-    staff = staffResult.staff || [];
-    departments = deptResult.departments || [];
-
-    renderStaff();
-    renderDepartments();
-    renderDepartmentOptions();
-
-  } catch (error) {
-    notice("message",error.message || "โหลดข้อมูลไม่สำเร็จ","error");
-  } finally {
-    busyState(false);
+  if (!session) {
+    throw Error("Session ไม่ถูกต้อง กรุณาเข้าสู่ระบบใหม่");
   }
+
+  // เรียก API ทีละรายการ ลดการชนกันของ Request ใน Apps Script
+  const staffResult = await api("admin_list_staff", {
+    sessionToken: session
+  });
+
+  if (!staffResult?.success) {
+    throw Error(staffResult?.message || "โหลดพนักงานไม่สำเร็จ");
+  }
+
+  const deptResult = await api("admin_list_departments", {
+    sessionToken: session
+  });
+
+  if (!deptResult?.success) {
+    throw Error(deptResult?.message || "โหลดแผนกไม่สำเร็จ");
+  }
+
+  staff = Array.isArray(staffResult.staff) ? staffResult.staff : [];
+  departments = Array.isArray(deptResult.departments)
+    ? deptResult.departments
+    : [];
+
+  renderStaff();
+  renderDepartments();
+  renderDepartmentOptions();
+
+  return true;
 }
 
 
@@ -792,9 +824,17 @@ window.saveDepartment = async function() {
       throw Error(result?.message || "บันทึกแผนกไม่สำเร็จ");
     }
 
-    toggleDepartmentForm(false);
     await refreshAll();
 
+    const savedDepartment = departments.find(
+      item => item.departmentId === departmentId
+    );
+
+    if (!savedDepartment || savedDepartment.departmentName !== departmentName) {
+      throw Error("บันทึกสำเร็จแล้ว แต่โหลดข้อมูลแผนกใหม่ไม่ครบ กรุณากดปุ่มโหลดใหม่อีกครั้ง");
+    }
+
+    toggleDepartmentForm(false);
     notice("message",result.message || "บันทึกแผนกเรียบร้อย","success");
 
   } catch (error) {
@@ -956,8 +996,7 @@ async function logout() {
   } catch (error) {
     console.warn(error);
   } finally {
-    session = "";
-    email = "";
+    clearSession();
     staff = [];
     departments = [];
 
@@ -973,6 +1012,51 @@ async function logout() {
 }
 
 $("logout").addEventListener("click",logout);
+
+
+// ==========================================
+// RESTORE SESSION AFTER PAGE REFRESH
+// ==========================================
+
+async function restoreSession() {
+  const savedToken = sessionStorage.getItem(SESSION_STORAGE_KEY);
+
+  if (!savedToken) return;
+
+  saveSession(savedToken);
+  busyState(true);
+
+  try {
+    const result = await api("admin_check_session", {
+      sessionToken: session
+    });
+
+    if (!result?.success) {
+      throw Error(result?.message || "Session หมดอายุ");
+    }
+
+    const adminValue = result.admin;
+    const adminEmail = typeof adminValue === "string"
+      ? adminValue
+      : adminValue?.email || result.email || "ผู้ดูแลระบบ";
+
+    showDashboard(adminEmail);
+    await refreshAll();
+
+  } catch (error) {
+    clearSession();
+    hide("dashboard");
+    hide("logout");
+    reveal("loginPanel");
+    notice(
+      "loginMessage",
+      "Session หมดอายุหรือไม่สามารถตรวจสอบได้ กรุณาเข้าสู่ระบบใหม่",
+      "error"
+    );
+  } finally {
+    busyState(false);
+  }
+}
 
 
 // ==========================================
@@ -1005,6 +1089,7 @@ function init() {
 }
 
 init();
+restoreSession();
 
 })();
 </script>
