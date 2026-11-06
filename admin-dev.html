@@ -569,12 +569,21 @@ function makeStaffCard(person) {
   edit.textContent = "แก้ไข";
   edit.onclick = () => editStaff(person.adminId);
 
+  const personDepartment = departments.find(
+    department => department.departmentId === person.departmentId
+  );
+  const departmentIsActive = personDepartment?.status === "ACTIVE";
+
   const link = document.createElement("button");
   link.className = "primary small";
-  link.textContent =
-    person.status === "ACTIVE" ? "ออกลิงก์ใหม่" : "สร้างลิงก์";
+  link.textContent = !departmentIsActive
+    ? "แผนกปิดใช้งาน"
+    : person.status === "ACTIVE" ? "ออกลิงก์ใหม่" : "สร้างลิงก์";
+  link.disabled = !departmentIsActive;
 
-  link.onclick = () => createStaffLink(person);
+  if (departmentIsActive) {
+    link.onclick = () => createStaffLink(person);
+  }
 
   const deactivate = document.createElement("button");
   deactivate.className = "danger small";
@@ -877,12 +886,13 @@ function makeDepartmentCard(department) {
   const actions = document.createElement("div");
   actions.className = "actions";
 
-  const edit = document.createElement("button");
-  edit.className = "secondary small";
-  edit.textContent = "แก้ไข";
-  edit.onclick = () => editDepartment(department.departmentId);
-
-  actions.append(edit);
+  if (department.status === "ACTIVE") {
+    const edit = document.createElement("button");
+    edit.className = "secondary small";
+    edit.textContent = "แก้ไข";
+    edit.onclick = () => editDepartment(department.departmentId);
+    actions.append(edit);
+  }
 
   if (department.status === "ACTIVE") {
     const off = document.createElement("button");
@@ -1001,4 +1011,3 @@ init();
 
 </body>
 </html>
-
